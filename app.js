@@ -131,11 +131,8 @@ function clearForm() {
 }
 
 function exportPDF() {
+    // This function can be further customized to create a more detailed PDF summary if needed.
     const patientName = document.getElementById('patientName').value || "N/A";
-    const diagnosisResult = analyzeDengueSymptoms();
-    
-    // This function can be expanded to populate a hidden PDF-specific div if needed
-    
     const element = document.getElementById('reportContent');
     const opt = {
         margin: 0.5,
@@ -200,62 +197,71 @@ function calculateBMI() {
 function performDiagnosis() {
     const diagnosisResult = analyzeDengueSymptoms();
     displayDiagnosisResult(diagnosisResult);
-    generateTreatmentPlan(); // Updated function call
+    generateTreatmentPlan();
     updateRiskChart(diagnosisResult);
     checkCriticalAlerts();
 }
 
 function analyzeDengueSymptoms() {
     const diseaseDay = parseInt(document.getElementById('diseaseDay').value);
+    
+    // Đọc các dấu hiệu cảnh báo từ checkbox
     const warningSigns = {
-        restlessness: document.getElementById('restlessness')?.checked, 
-        abdominalPain: document.getElementById('abdominalPain')?.checked,
-        persistentVomiting: document.getElementById('persistentVomiting')?.checked, 
-        mucosalBleeding: document.getElementById('mucosalBleeding')?.checked,
-        hepatomegaly: document.getElementById('hepatomegaly')?.checked, 
-        oliguria: document.getElementById('oliguria')?.checked,
-        pleuralEffusion: document.getElementById('pleuralEffusion')?.checked
+        restlessness: document.getElementById('restlessness').checked,
+        abdominalPain: document.getElementById('abdominalPain').checked,
+        persistentVomiting: document.getElementById('persistentVomiting').checked,
+        mucosalBleeding: document.getElementById('mucosalBleeding').checked,
+        hepatomegaly: document.getElementById('hepatomegaly').checked,
+        oliguria: document.getElementById('oliguria').checked,
     };
+    
+    // Đọc các dấu hiệu của SXH Dengue nặng
+    const severeSigns = {
+        severePlasmaLeakage: document.getElementById('severePlasmaLeakage').checked,
+        severeBleeding: document.getElementById('severeBleeding').checked,
+        severeOrganImpairment: document.getElementById('severeOrganImpairment').checked,
+    };
+
     const hematocrit = parseFloat(document.getElementById('hematocrit').value);
     const platelets = parseFloat(document.getElementById('platelets').value);
-    const ast = parseFloat(document.getElementById('ast').value);
-    const alt = parseFloat(document.getElementById('alt').value);
-    const pulsePressure = parseFloat(document.getElementById('pulsePressure').value);
 
+    // Xác định giai đoạn bệnh
     let stage = 'Giai đoạn sốt';
     if (diseaseDay >= 4 && diseaseDay <= 7) { stage = 'Giai đoạn nguy hiểm'; } 
     else if (diseaseDay > 7) { stage = 'Giai đoạn hồi phục'; }
 
+    // Phân độ nặng
     let severity = 'Sốt Dengue';
-    let riskLevel = 'Thấp';
     
     const warningSignCount = Object.values(warningSigns).filter(sign => sign).length;
-    const hasLabWarning = (platelets && platelets < 100000) || (hematocrit && hematocrit > 45) || (ast && ast >= 400) || (alt && alt >= 400);
+    // Theo QĐ 2760, Hct tăng cao hoặc tiểu cầu giảm nhanh là dấu hiệu cảnh báo
+    const hasLabWarning = (hematocrit && hematocrit >= 45) || (platelets && platelets <= 100000);
 
     if (warningSignCount > 0 || hasLabWarning) {
         severity = 'Sốt Dengue có dấu hiệu cảnh báo';
-        riskLevel = 'Trung bình';
     }
     
-    const isSevere = (ast && ast >= 1000) || (alt && alt >= 1000) || (pulsePressure && pulsePressure <= 20) || warningSigns.restlessness || warningSigns.pleuralEffusion;
-    
-    if (isSevere) {
+    if (Object.values(severeSigns).some(sign => sign)) {
         severity = 'Sốt Dengue nặng';
-        riskLevel = 'Cao';
     }
     
-    return { stage, severity, riskLevel, warningSignCount };
+    // Trả về kết quả phân tích
+    return { stage, severity, warningSignCount };
 }
 
 function displayDiagnosisResult(result) {
     const resultDiv = document.getElementById('diagnosisResult');
     const riskColor = { 'Thấp': 'text-green-600', 'Trung bình': 'text-yellow-600', 'Cao': 'text-red-600' };
+    let riskLevel = 'Thấp';
+    if (result.severity === 'Sốt Dengue có dấu hiệu cảnh báo') riskLevel = 'Trung bình';
+    if (result.severity === 'Sốt Dengue nặng') riskLevel = 'Cao';
+
     resultDiv.innerHTML = `
         <div class="space-y-3">
             <div class="flex items-center"><i class="fas fa-diagnosis mr-2 text-blue-600"></i><strong>Chẩn đoán:</strong> ${result.severity}</div>
             <div class="flex items-center"><i class="fas fa-clock mr-2 text-gray-600"></i><strong>Giai đoạn:</strong> ${result.stage}</div>
-            <div class="flex items-center"><i class="fas fa-exclamation-triangle mr-2 ${riskColor[result.riskLevel]}"></i><strong>Mức độ nguy hiểm:</strong><span class="${riskColor[result.riskLevel]} font-semibold ml-1">${result.riskLevel}</span></div>
-            <div class="text-sm text-gray-600"><strong>Số dấu hiệu cảnh báo:</strong> ${result.warningSignCount}/7</div>
+            <div class="flex items-center"><i class="fas fa-exclamation-triangle mr-2 ${riskColor[riskLevel]}"></i><strong>Mức độ nguy hiểm:</strong><span class="${riskColor[riskLevel]} font-semibold ml-1">${riskLevel}</span></div>
+            <div class="text-sm text-gray-600"><strong>Số dấu hiệu cảnh báo:</strong> ${result.warningSignCount}/6</div>
         </div>`;
 }
 
@@ -348,13 +354,16 @@ function initializeRiskChart() {
 }
 
 function updateRiskChart(result) {
+    let riskLevel = 'Thấp';
+    if (result.severity === 'Sốt Dengue có dấu hiệu cảnh báo') riskLevel = 'Trung bình';
+    if (result.severity === 'Sốt Dengue nặng') riskLevel = 'Cao';
     const riskData = { 'Thấp': [70, 20, 10], 'Trung bình': [30, 50, 20], 'Cao': [10, 30, 60] };
-    riskChart.data.datasets[0].data = riskData[result.riskLevel] || [33,33,34];
+    riskChart.data.datasets[0].data = riskData[riskLevel] || [33,33,34];
     riskChart.update();
 }
         
 function checkCriticalAlerts() {
-    // This function can be expanded as needed
+    // This function can be expanded as needed to include more alerts.
 }
 
 // =================================================================
@@ -362,45 +371,54 @@ function checkCriticalAlerts() {
 // =================================================================
 function addMonitoringRecord() {
     const record = {
-        time: new Date().toLocaleTimeString('vi-VN'),
-        temperature: document.getElementById('monitor_temp')?.value || '-',
-        pulse: document.getElementById('monitor_pulse')?.value || '-',
-        bp: `${document.getElementById('monitor_sbp')?.value || '-'}/${document.getElementById('monitor_dbp')?.value || '-'}`,
-        respiratoryRate: document.getElementById('monitor_resp')?.value || '-',
-        spO2: document.getElementById('monitor_spo2')?.value || '-',
-        hematocrit: document.getElementById('monitor_hct')?.value || '-',
-        intervention: document.getElementById('monitor_intervention')?.value || 'Theo dõi'
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        consciousness: document.getElementById('monitor_consciousness').value || '-',
+        temperature: document.getElementById('monitor_temp').value || '-',
+        pulse: document.getElementById('monitor_pulse').value || '-',
+        bp: document.getElementById('monitor_bp').value || '-',
+        spO2: document.getElementById('monitor_spo2').value || '-',
+        fluidIntake: document.getElementById('monitor_fluid_intake').value || '-',
+        urineOutput: document.getElementById('monitor_urine_output').value || '-',
+        diet: document.getElementById('monitor_diet').value || '-',
+        hematocrit: document.getElementById('monitor_hct').value || '-',
+        intervention: document.getElementById('monitor_intervention').value || 'Theo dõi'
     };
+
     monitoringData.unshift(record);
     updateMonitoringTable();
+
+    // Tự động xóa các trường input sau khi thêm
+    const fieldsToClear = ['monitor_temp', 'monitor_pulse', 'monitor_bp', 'monitor_spo2', 'monitor_fluid_intake', 'monitor_urine_output', 'monitor_diet', 'monitor_hct', 'monitor_intervention'];
+    fieldsToClear.forEach(id => document.getElementById(id).value = '');
 }
 
 function updateMonitoringTable() {
     const tableBody = document.getElementById('monitoringTable');
-    if (!tableBody) return;
     if (monitoringData.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="8" class="border p-4 text-center text-gray-600">Chưa có dữ liệu theo dõi</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="9" class="border p-4 text-center text-gray-600">Chưa có dữ liệu theo dõi</td></tr>';
         return;
     }
     tableBody.innerHTML = monitoringData.map(r => `
         <tr class="text-center">
             <td class="border p-2">${r.time}</td>
-            <td class="border p-2">${r.temperature}</td>
-            <td class="border p-2">${r.pulse}</td>
-            <td class="border p-2">${r.bp}</td>
-            <td class="border p-2">${r.respiratoryRate}</td>
-            <td class="border p-2">${r.spO2}</td>
-            <td class="border p-2">${r.hematocrit}</td>
-            <td class="border p-2">${r.intervention}</td>
+            <td class="border p-2">${r.consciousness}</td>
+            <td class="border p-2">${r.temperature ? r.temperature + '°C' : '-'}</td>
+            <td class="border p-2">${r.pulse || '-'}/${r.bp || '-'}</td>
+            <td class="border p-2">${r.spO2 ? r.spO2 + '%' : '-'}</td>
+            <td class="border p-2">${r.diet || '-'}/${r.fluidIntake || '-'}ml</td>
+            <td class="border p-2">${r.urineOutput ? r.urineOutput + 'ml' : '-'}</td>
+            <td class="border p-2">${r.hematocrit ? r.hematocrit + '%' : '-'}</td>
+            <td class="border p-2 text-left">${r.intervention}</td>
         </tr>`).join('');
 }
+
 
 // =================================================================
 //              PWA SERVICE WORKER REGISTRATION
 // =================================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('./sw.js') // Corrected path for deployment
       .then(registration => {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống AI Hỗ trợ Chẩn đoán Sốt Xuất Huyết v4.0</title>
+    <title>Hệ thống AI Hỗ trợ Chẩn đoán Sốt Xuất Huyết v5.0</title>
     
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -49,31 +49,87 @@
             </div>
             
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-heartbeat mr-2"></i> Dấu hiệu sinh tồn & Xét nghiệm</h2>
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                     <div><label class="block text-sm font-medium text-gray-700 mb-1">HA tâm thu (mmHg)</label><input type="number" id="systolicBP" class="w-full p-2 border border-gray-300 rounded-md"></div>
-                     <div><label class="block text-sm font-medium text-gray-700 mb-1">HA tâm trương (mmHg)</label><input type="number" id="diastolicBP" class="w-full p-2 border border-gray-300 rounded-md"></div>
-                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Hiệu áp (mmHg)</label><input type="number" id="pulsePressure" class="w-full p-2 border border-gray-300 rounded-md bg-gray-100" readonly></div>
-                     </div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-vials mr-2"></i> Triệu chứng lâm sàng và Xét nghiệm</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Triệu chứng lâm sàng</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center"><input type="checkbox" id="fever" class="mr-2"><span>Sốt cao đột ngột, liên tục</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="headache" class="mr-2"><span>Nhức đầu, chán ăn, buồn nôn</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="myalgia" class="mr-2"><span>Đau cơ, đau khớp, nhức hai hố mắt</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="petechiae" class="mr-2"><span>Chấm xuất huyết ở da</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="bleedingGums" class="mr-2"><span>Chảy máu chân răng hoặc chảy máu cam</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="tourniquetPositive" class="mr-2"><span>Nghiệm pháp dây thắt (+)</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-red-600">Dấu hiệu cảnh báo</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center"><input type="checkbox" id="restlessness" class="mr-2 warning-sign"><span class="text-red-600">Vật vã, lừ đừ, li bì</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="abdominalPain" class="mr-2 warning-sign"><span class="text-red-600">Đau bụng vùng gan hoặc ấn đau</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="hepatomegaly" class="mr-2 warning-sign"><span class="text-red-600">Gan to > 2cm</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="persistentVomiting" class="mr-2 warning-sign"><span class="text-red-600">Nôn nhiều</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="mucosalBleeding" class="mr-2 warning-sign"><span class="text-red-600">Xuất huyết niêm mạc</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="oliguria" class="mr-2 warning-sign"><span class="text-red-600">Tiểu ít</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Xét nghiệm & Dấu hiệu nặng</h3>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
+                            <div><label class="block text-sm font-medium">Hct (%)</label><input type="number" id="hematocrit" class="w-full p-2 border rounded-md"></div>
+                            <div><label class="block text-sm font-medium">Tiểu cầu</label><input type="number" id="platelets" class="w-full p-2 border rounded-md" placeholder="/mm³"></div>
+                            <div><label class="block text-sm font-medium">WBC</label><input type="number" id="wbc" class="w-full p-2 border rounded-md" placeholder="G/L"></div>
+                            <div></div> <div><label class="block text-sm font-medium">AST (U/L)</label><input type="number" id="ast" class="w-full p-2 border rounded-md"></div>
+                            <div><label class="block text-sm font-medium">ALT (U/L)</label><input type="number" id="alt" class="w-full p-2 border rounded-md"></div>
+                        </div>
+                        <h4 class="text-md font-medium mt-4 mb-2 text-red-700">Dấu hiệu SXH Dengue nặng</h4>
+                        <div class="space-y-2">
+                            <label class="flex items-center"><input type="checkbox" id="severePlasmaLeakage" class="mr-2"><span class="text-red-700">Thoát huyết tương nặng (sốc)</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="severeBleeding" class="mr-2"><span class="text-red-700">Chảy máu nặng</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="severeOrganImpairment" class="mr-2"><span class="text-red-700">Suy tạng nặng</span></label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-brain mr-2"></i> Chẩn đoán và phân độ AI</h2>
-                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div>
-                         <div id="diagnosisResult" class="p-4 bg-gray-100 rounded-lg min-h-[150px]"><p class="text-gray-600">Nhập thông tin và nhấn "Thực hiện chẩn đoán"...</p></div>
-                         <button onclick="performDiagnosis()" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 no-print"><i class="fas fa-diagnoses mr-2"></i>Thực hiện chẩn đoán</button>
-                     </div>
-                     <div><div class="chart-container"><canvas id="riskChart"></canvas></div></div>
-                 </div>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-prescription-bottle-alt mr-2"></i> Hướng dẫn Điều trị & Liều lượng</h2>
-                <div id="treatmentPlan" class="space-y-4">
-                    <div class="p-4 bg-gray-100 rounded-lg">
-                        <p class="text-gray-600">Thực hiện chẩn đoán để nhận hướng dẫn điều trị chi tiết...</p>
-                    </div>
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-notes-medical mr-2"></i> Theo dõi điều trị</h2>
+                
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4 p-4 border rounded-lg bg-gray-50 no-print">
+                    <div><label class="text-sm font-medium">Tri giác</label><select id="monitor_consciousness" class="w-full p-2 border rounded-md"><option value="Tỉnh">Tỉnh</option><option value="Lừ đừ">Lừ đừ</option><option value="Li bì">Li bì</option><option value="Hôn mê">Hôn mê</option></select></div>
+                    <div><label class="text-sm font-medium">Nhiệt độ</label><input type="number" id="monitor_temp" class="w-full p-2 border rounded-md" step="0.1"></div>
+                    <div><label class="text-sm font-medium">Mạch</label><input type="number" id="monitor_pulse" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="text-sm font-medium">HA</label><input type="text" id="monitor_bp" class="w-full p-2 border rounded-md" placeholder="Thu/Trương"></div>
+                    <div><label class="text-sm font-medium">SpO2</label><input type="number" id="monitor_spo2" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="text-sm font-medium">Dịch uống (ml)</label><input type="number" id="monitor_fluid_intake" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="text-sm font-medium">Nước tiểu (ml)</label><input type="number" id="monitor_urine_output" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="text-sm font-medium">Ăn uống</label><input type="text" id="monitor_diet" class="w-full p-2 border rounded-md" placeholder="Kém, được..."></div>
+                    <div><label class="text-sm font-medium">Hct (%)</label><input type="number" id="monitor_hct" class="w-full p-2 border rounded-md"></div>
+                    <div class="col-span-3"><label class="text-sm font-medium">Dịch truyền & Xử trí</label><input type="text" id="monitor_intervention" class="w-full p-2 border rounded-md"></div>
+                </div>
+                <button onclick="addMonitoringRecord()" class="mb-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 no-print">
+                    <i class="fas fa-plus mr-2"></i> Thêm vào bảng theo dõi
+                </button>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse border border-gray-300">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="border p-2">Thời gian</th>
+                                <th class="border p-2">Tri giác</th>
+                                <th class="border p-2">Nhiệt độ</th>
+                                <th class="border p-2">Mạch/HA</th>
+                                <th class="border p-2">SpO2</th>
+                                <th class="border p-2">Ăn/Uống</th>
+                                <th class="border p-2">N.Tiểu</th>
+                                <th class="border p-2">Hct</th>
+                                <th class="border p-2">Dịch truyền/Xử trí</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monitoringTable">
+                            <tr><td colspan="9" class="border p-4 text-center text-gray-600">Chưa có dữ liệu theo dõi</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
