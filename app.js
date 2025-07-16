@@ -18,8 +18,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function setupEventListeners() {
     // Tự động tính toán khi người dùng nhập liệu
     document.getElementById('onsetDate').addEventListener('input', calculateDiseaseDay);
-    document.getElementById('systolicBP').addEventListener('input', calculatePulsePressure);
-    document.getElementById('diastolicBP').addEventListener('input', calculatePulsePressure);
     document.getElementById('patientWeight').addEventListener('input', calculateBMI);
     document.getElementById('patientHeight').addEventListener('input', calculateBMI);
 
@@ -45,7 +43,8 @@ function savePatient() {
     const patientId = currentPatientId || `patient_${Date.now()}`;
     const patientRecord = { id: patientId, data: {}, monitoring: monitoringData };
     
-    const formElements = document.querySelectorAll('input, select');
+    // Lưu giá trị từ tất cả input, select, và textarea có ID
+    const formElements = document.querySelectorAll('input[id], select[id], textarea[id]');
     formElements.forEach(el => {
         if(el.id) {
             patientRecord.data[el.id] = el.type === 'checkbox' ? el.checked : el.value;
@@ -82,6 +81,7 @@ function handlePatientSelection() {
         currentPatientId = patientId;
         const patientRecord = patientsData[patientId];
         
+        // Tải dữ liệu vào form
         for (const key in patientRecord.data) {
             const el = document.getElementById(key);
             if (el) {
@@ -114,10 +114,14 @@ function deletePatient() {
 
 function clearForm() {
     const form = document.querySelector('body');
-    const inputs = form.querySelectorAll('input, select');
+    // Xóa tất cả input, select, và textarea
+    const inputs = form.querySelectorAll('input, select, textarea');
     inputs.forEach(input => {
-        if (input.type === 'checkbox') input.checked = false;
-        else if (input.tagName.toLowerCase() !== 'button') input.value = '';
+        if (input.type === 'checkbox') {
+            input.checked = false;
+        } else if (input.tagName.toLowerCase() !== 'button') {
+            input.value = '';
+        }
     });
 
     document.getElementById('diagnosisResult').innerHTML = '<p class="text-gray-600">Nhập thông tin và nhấn "Thực hiện chẩn đoán"...</p>';
@@ -131,7 +135,6 @@ function clearForm() {
 }
 
 function exportPDF() {
-    // This function can be further customized to create a more detailed PDF summary if needed.
     const patientName = document.getElementById('patientName').value || "N/A";
     const element = document.getElementById('reportContent');
     const opt = {
@@ -153,7 +156,7 @@ function calculateDiseaseDay() {
         const today = new Date();
         today.setHours(0,0,0,0);
         onsetDate.setHours(0,0,0,0);
-        if (onsetDate > today) {
+        if (isNaN(onsetDate.getTime()) || onsetDate > today) {
              document.getElementById('diseaseDay').value = '';
              return;
         }
@@ -162,18 +165,6 @@ function calculateDiseaseDay() {
         document.getElementById('diseaseDay').value = diffDays;
     } catch (e) {
          document.getElementById('diseaseDay').value = '';
-    }
-}
-
-function calculatePulsePressure() {
-    const systolic = parseFloat(document.getElementById('systolicBP').value);
-    const diastolic = parseFloat(document.getElementById('diastolicBP').value);
-    const pulsePressureEl = document.getElementById('pulsePressure');
-
-    if (systolic > 0 && diastolic > 0 && systolic >= diastolic) {
-        pulsePressureEl.value = systolic - diastolic;
-    } else {
-        pulsePressureEl.value = '';
     }
 }
 
@@ -224,6 +215,7 @@ function analyzeDengueSymptoms() {
 
     const hematocrit = parseFloat(document.getElementById('hematocrit').value);
     const platelets = parseFloat(document.getElementById('platelets').value);
+    const wbc = parseFloat(document.getElementById('wbc').value);
 
     // Xác định giai đoạn bệnh
     let stage = 'Giai đoạn sốt';
@@ -234,8 +226,8 @@ function analyzeDengueSymptoms() {
     let severity = 'Sốt Dengue';
     
     const warningSignCount = Object.values(warningSigns).filter(sign => sign).length;
-    // Theo QĐ 2760, Hct tăng cao hoặc tiểu cầu giảm nhanh là dấu hiệu cảnh báo
-    const hasLabWarning = (hematocrit && hematocrit >= 45) || (platelets && platelets <= 100000);
+    // Theo QĐ 2760, Hct tăng cao, tiểu cầu giảm nhanh, hoặc bạch cầu giảm là dấu hiệu cảnh báo
+    const hasLabWarning = (hematocrit && hematocrit >= 45) || (platelets && platelets <= 100000) || (wbc && wbc < 4.0);
 
     if (warningSignCount > 0 || hasLabWarning) {
         severity = 'Sốt Dengue có dấu hiệu cảnh báo';
@@ -245,7 +237,6 @@ function analyzeDengueSymptoms() {
         severity = 'Sốt Dengue nặng';
     }
     
-    // Trả về kết quả phân tích
     return { stage, severity, warningSignCount };
 }
 
@@ -277,60 +268,21 @@ function generateTreatmentPlan() {
 
     switch (result.severity) {
         case 'Sốt Dengue':
-            html = `
-                <div class="bg-green-50 border border-green-200 p-4 rounded-lg">
-                    <h3 class="font-semibold text-green-800 mb-2">Phác đồ Nhóm A: Điều trị tại nhà</h3>
-                    <ul class="list-disc list-inside space-y-1 text-green-700">
-                        ${paracetamolDose}
-                        <li><b>Bù dịch đường uống:</b> Khuyến khích uống nhiều nước, Oresol, nước trái cây.</li>
-                        <li><b>Hướng dẫn Oresol:</b> Pha 1 gói với đúng lượng nước (thường là 1 lít), uống thay nước.</li>
-                        <li>Theo dõi sát các dấu hiệu cảnh báo để tái khám ngay.</li>
-                    </ul>
-                </div>`;
+            html = `<div class="bg-green-50 border border-green-200 p-4 rounded-lg"><h3 class="font-semibold text-green-800 mb-2">Phác đồ Nhóm A: Điều trị tại nhà</h3><ul class="list-disc list-inside space-y-1 text-green-700">${paracetamolDose}<li><b>Bù dịch đường uống:</b> Khuyến khích uống nhiều nước, Oresol, nước trái cây.</li><li>Theo dõi sát các dấu hiệu cảnh báo để tái khám ngay.</li></ul></div>`;
             break;
-
         case 'Sốt Dengue có dấu hiệu cảnh báo':
             const initialFluidMin = (5 * weight).toFixed(0);
             const initialFluidMax = (7 * weight).toFixed(0);
-            html = `
-                <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-                    <h3 class="font-semibold text-yellow-800 mb-2">Phác đồ Nhóm B: Nhập viện theo dõi</h3>
-                     <ul class="list-disc list-inside space-y-1 text-yellow-700">
-                        ${paracetamolDose}
-                        <li><b>Truyền dịch:</b> Chỉ định khi nôn nhiều, không uống được hoặc có dấu hiệu mất nước.</li>
-                        <li><b>Loại dịch:</b> Ringer Lactate hoặc NaCl 0,9%.</li>
-                        <li>
-                            <b>Liều ban đầu:</b> Bắt đầu với 5-7 ml/kg/giờ.
-                            ${weight > 0 ? `(Tương đương <b>${initialFluidMin} - ${initialFluidMax} ml/giờ</b>)` : ''}
-                        </li>
-                        <li>Điều chỉnh tốc độ truyền dịch dựa vào đáp ứng của bệnh nhân và diễn tiến HCT.</li>
-                    </ul>
-                </div>`;
+            html = `<div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg"><h3 class="font-semibold text-yellow-800 mb-2">Phác đồ Nhóm B: Nhập viện theo dõi</h3><ul class="list-disc list-inside space-y-1 text-yellow-700">${paracetamolDose}<li><b>Truyền dịch:</b> Chỉ định khi nôn nhiều, không uống được hoặc có dấu hiệu mất nước. Loại dịch: Ringer Lactate hoặc NaCl 0,9%.</li><li><b>Liều ban đầu:</b> Bắt đầu với 5-7 ml/kg/giờ. ${weight > 0 ? `(Tương đương <b>${initialFluidMin} - ${initialFluidMax} ml/giờ</b>)` : ''}</li><li>Điều chỉnh tốc độ truyền dịch dựa vào đáp ứng và diễn tiến HCT.</li></ul></div>`;
             break;
-
         case 'Sốt Dengue nặng':
             const shockFluidMin = (15 * weight).toFixed(0);
             const shockFluidMax = (20 * weight).toFixed(0);
-             html = `
-                <div class="bg-red-50 border border-red-200 p-4 rounded-lg">
-                    <h3 class="font-semibold text-red-800 mb-2">Phác đồ Nhóm C: Điều trị cấp cứu (ICU)</h3>
-                    <ul class="list-disc list-inside space-y-1 text-red-700">
-                        <li><b>Chống sốc:</b> Bù dịch nhanh qua đường tĩnh mạch.</li>
-                        <li><b>Loại dịch:</b> Ringer Lactate hoặc NaCl 0,9%.</li>
-                        <li>
-                            <b>Liều chống sốc ban đầu:</b> 15-20 ml/kg/giờ, truyền trong 1 giờ.
-                            ${weight > 0 ? `(Tương đương <b>${shockFluidMin} - ${shockFluidMax} ml</b> trong giờ đầu)` : ''}
-                        </li>
-                        <li>Đánh giá lại tình trạng sốc sau mỗi giờ và xử trí theo phác đồ chống sốc của Bộ Y tế.</li>
-                        <li>Thở oxy, theo dõi các dấu hiệu sinh tồn liên tục.</li>
-                    </ul>
-                </div>`;
+             html = `<div class="bg-red-50 border border-red-200 p-4 rounded-lg"><h3 class="font-semibold text-red-800 mb-2">Phác đồ Nhóm C: Điều trị cấp cứu (ICU)</h3><ul class="list-disc list-inside space-y-1 text-red-700"><li><b>Chống sốc:</b> Bù dịch nhanh qua đường tĩnh mạch. Loại dịch: Ringer Lactate hoặc NaCl 0,9%.</li><li><b>Liều chống sốc ban đầu:</b> 15-20 ml/kg/giờ, truyền trong 1 giờ. ${weight > 0 ? `(Tương đương <b>${shockFluidMin} - ${shockFluidMax} ml</b> trong giờ đầu)` : ''}</li><li>Đánh giá lại tình trạng sốc sau mỗi giờ và xử trí theo phác đồ của Bộ Y tế.</li></ul></div>`;
             break;
-        
         default:
              html = `<div class="p-4 bg-gray-100 rounded-lg"><p class="text-gray-600">Chưa đủ thông tin để đưa ra hướng dẫn.</p></div>`;
     }
-
     treatmentDiv.innerHTML = html;
 }
 
@@ -346,10 +298,7 @@ function initializeRiskChart() {
             labels: ['Nguy cơ thấp', 'Nguy cơ trung bình', 'Nguy cơ cao'],
             datasets: [{ data: [33, 33, 34], backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }]
         },
-        options: {
-            responsive: true, maintainAspectRatio: false,
-            plugins: { title: { display: true, text: 'Phân tích Nguy cơ' }, legend: { position: 'bottom' } }
-        }
+        options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Phân tích Nguy cơ' }, legend: { position: 'bottom' } } }
     });
 }
 
@@ -363,7 +312,7 @@ function updateRiskChart(result) {
 }
         
 function checkCriticalAlerts() {
-    // This function can be expanded as needed to include more alerts.
+    // Placeholder for future alert logic
 }
 
 // =================================================================
@@ -383,11 +332,9 @@ function addMonitoringRecord() {
         hematocrit: document.getElementById('monitor_hct').value || '-',
         intervention: document.getElementById('monitor_intervention').value || 'Theo dõi'
     };
-
     monitoringData.unshift(record);
     updateMonitoringTable();
-
-    // Tự động xóa các trường input sau khi thêm
+    // Clear monitoring input fields after adding
     const fieldsToClear = ['monitor_temp', 'monitor_pulse', 'monitor_bp', 'monitor_spo2', 'monitor_fluid_intake', 'monitor_urine_output', 'monitor_diet', 'monitor_hct', 'monitor_intervention'];
     fieldsToClear.forEach(id => document.getElementById(id).value = '');
 }
@@ -412,13 +359,12 @@ function updateMonitoringTable() {
         </tr>`).join('');
 }
 
-
 // =================================================================
 //              PWA SERVICE WORKER REGISTRATION
 // =================================================================
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js') // Corrected path for deployment
+    navigator.serviceWorker.register('./sw.js')
       .then(registration => {
         console.log('ServiceWorker registration successful with scope: ', registration.scope);
       })

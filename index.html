@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống AI Hỗ trợ Chẩn đoán Sốt Xuất Huyết v5.0</title>
+    <title>Hệ thống AI Hỗ trợ Chẩn đoán Sốt Xuất Huyết v6.0</title>
     
     <link rel="stylesheet" href="style.css">
     <link rel="manifest" href="manifest.json">
@@ -34,7 +34,7 @@
 
         <div id="reportContent">
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                 <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-user-md mr-2"></i> Thông tin bệnh nhân</h2>
+                 <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-user-md mr-2"></i> Thông tin hành chính</h2>
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label><input type="text" id="patientName" class="w-full p-2 border border-gray-300 rounded-md"></div>
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Tuổi</label><input type="number" id="patientAge" class="w-full p-2 border border-ray-300 rounded-md"></div>
@@ -47,26 +47,34 @@
                     <div><label class="block text-sm font-medium text-gray-700 mb-1">Ngày bệnh (thứ)</label><input type="number" id="diseaseDay" class="w-full p-2 border border-gray-300 rounded-md bg-gray-100" readonly></div>
                 </div>
             </div>
-            
+
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-vials mr-2"></i> Triệu chứng lâm sàng và Xét nghiệm</h2>
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-diagnoses mr-2"></i> Khám lâm sàng & Dấu hiệu sinh tồn</h2>
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+                    <div><label class="block text-sm font-medium">Nhiệt độ (°C)</label><input type="number" id="temperature" class="w-full p-2 border rounded-md" step="0.1"></div>
+                    <div><label class="block text-sm font-medium">Mạch (lần/p)</label><input type="number" id="pulse" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="block text-sm font-medium">Nhịp thở (lần/p)</label><input type="number" id="respiratoryRate" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="block text-sm font-medium">SpO2 (%)</label><input type="number" id="spo2" class="w-full p-2 border rounded-md"></div>
+                    <div><label class="block text-sm font-medium">Huyết áp (mmHg)</label><input type="text" id="bloodPressure" class="w-full p-2 border rounded-md" placeholder="Tâm thu/Tâm trương"></div>
+                </div>
+                <hr class="my-4">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                         <h3 class="text-lg font-medium mb-3 text-gray-700">Triệu chứng lâm sàng</h3>
                         <div class="space-y-2">
                             <label class="flex items-center"><input type="checkbox" id="fever" class="mr-2"><span>Sốt cao đột ngột, liên tục</span></label>
                             <label class="flex items-center"><input type="checkbox" id="headache" class="mr-2"><span>Nhức đầu, chán ăn, buồn nôn</span></label>
-                            <label class="flex items-center"><input type="checkbox" id="myalgia" class="mr-2"><span>Đau cơ, đau khớp, nhức hai hố mắt</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="myalgia" class="mr-2"><span>Đau cơ, khớp; nhức hố mắt</span></label>
                             <label class="flex items-center"><input type="checkbox" id="petechiae" class="mr-2"><span>Chấm xuất huyết ở da</span></label>
-                            <label class="flex items-center"><input type="checkbox" id="bleedingGums" class="mr-2"><span>Chảy máu chân răng hoặc chảy máu cam</span></label>
-                            <label class="flex items-center"><input type="checkbox" id="tourniquetPositive" class="mr-2"><span>Nghiệm pháp dây thắt (+)</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="bleedingGums" class="mr-2"><span>Chảy máu chân răng/mũi</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="tourniquetPositive" class="mr-2"><span>Dây thắt (+)</span></label>
                         </div>
                     </div>
                     <div>
                         <h3 class="text-lg font-medium mb-3 text-red-600">Dấu hiệu cảnh báo</h3>
                         <div class="space-y-2">
                             <label class="flex items-center"><input type="checkbox" id="restlessness" class="mr-2 warning-sign"><span class="text-red-600">Vật vã, lừ đừ, li bì</span></label>
-                            <label class="flex items-center"><input type="checkbox" id="abdominalPain" class="mr-2 warning-sign"><span class="text-red-600">Đau bụng vùng gan hoặc ấn đau</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="abdominalPain" class="mr-2 warning-sign"><span class="text-red-600">Đau bụng vùng gan</span></label>
                             <label class="flex items-center"><input type="checkbox" id="hepatomegaly" class="mr-2 warning-sign"><span class="text-red-600">Gan to > 2cm</span></label>
                             <label class="flex items-center"><input type="checkbox" id="persistentVomiting" class="mr-2 warning-sign"><span class="text-red-600">Nôn nhiều</span></label>
                             <label class="flex items-center"><input type="checkbox" id="mucosalBleeding" class="mr-2 warning-sign"><span class="text-red-600">Xuất huyết niêm mạc</span></label>
@@ -74,20 +82,48 @@
                         </div>
                     </div>
                     <div>
-                        <h3 class="text-lg font-medium mb-3 text-gray-700">Xét nghiệm & Dấu hiệu nặng</h3>
-                        <div class="grid grid-cols-2 gap-x-4 gap-y-2">
-                            <div><label class="block text-sm font-medium">Hct (%)</label><input type="number" id="hematocrit" class="w-full p-2 border rounded-md"></div>
-                            <div><label class="block text-sm font-medium">Tiểu cầu</label><input type="number" id="platelets" class="w-full p-2 border rounded-md" placeholder="/mm³"></div>
-                            <div><label class="block text-sm font-medium">WBC</label><input type="number" id="wbc" class="w-full p-2 border rounded-md" placeholder="G/L"></div>
-                            <div></div> <div><label class="block text-sm font-medium">AST (U/L)</label><input type="number" id="ast" class="w-full p-2 border rounded-md"></div>
-                            <div><label class="block text-sm font-medium">ALT (U/L)</label><input type="number" id="alt" class="w-full p-2 border rounded-md"></div>
-                        </div>
-                        <h4 class="text-md font-medium mt-4 mb-2 text-red-700">Dấu hiệu SXH Dengue nặng</h4>
+                        <h3 class="text-lg font-medium mb-3 text-red-700">Dấu hiệu SXH Dengue nặng</h3>
                         <div class="space-y-2">
                             <label class="flex items-center"><input type="checkbox" id="severePlasmaLeakage" class="mr-2"><span class="text-red-700">Thoát huyết tương nặng (sốc)</span></label>
                             <label class="flex items-center"><input type="checkbox" id="severeBleeding" class="mr-2"><span class="text-red-700">Chảy máu nặng</span></label>
                             <label class="flex items-center"><input type="checkbox" id="severeOrganImpairment" class="mr-2"><span class="text-red-700">Suy tạng nặng</span></label>
                         </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                 <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-vials mr-2"></i> Kết quả Cận lâm sàng</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                    <div>
+                        <h4 class="text-md font-medium mb-2 text-blue-800">Công thức máu</h4>
+                        <div class="grid grid-cols-3 gap-4">
+                             <div><label class="block text-sm font-medium">RBC</label><input type="number" id="rbc" class="w-full p-2 border rounded-md" placeholder="T/L"></div>
+                             <div><label class="block text-sm font-medium">WBC</label><input type="number" id="wbc" class="w-full p-2 border rounded-md" placeholder="G/L"></div>
+                             <div><label class="block text-sm font-medium">Hct (%)</label><input type="number" id="hematocrit" class="w-full p-2 border rounded-md"></div>
+                             <div><label class="block text-sm font-medium">Neutro (%)</label><input type="number" id="neutrophil" class="w-full p-2 border rounded-md"></div>
+                             <div><label class="block text-sm font-medium">Lympho (%)</label><input type="number" id="lymphocyte" class="w-full p-2 border rounded-md"></div>
+                             <div><label class="block text-sm font-medium">Tiểu cầu</label><input type="number" id="platelets" class="w-full p-2 border rounded-md" placeholder="/mm³"></div>
+                        </div>
+
+                        <h4 class="text-md font-medium mt-6 mb-2 text-blue-800">Hóa sinh máu & Marker viêm</h4>
+                        <div class="grid grid-cols-4 gap-4">
+                            <div><label class="block text-sm font-medium">AST (U/L)</label><input type="number" id="ast" class="w-full p-2 border rounded-md"></div>
+                            <div><label class="block text-sm font-medium">ALT (U/L)</label><input type="number" id="alt" class="w-full p-2 border rounded-md"></div>
+                            <div><label class="block text-sm font-medium">CRP</label><input type="number" id="crp" class="w-full p-2 border rounded-md" placeholder="mg/L"></div>
+                            <div><label class="block text-sm font-medium">PCT</label><input type="number" id="pct" class="w-full p-2 border rounded-md" placeholder="ng/mL"></div>
+                        </div>
+                    </div>
+                    <div>
+                         <h4 class="text-md font-medium mb-2 text-blue-800">Chẩn đoán hình ảnh</h4>
+                         <div>
+                             <label class="block text-sm font-medium mb-1">Kết quả X-quang Tim Phổi</label>
+                             <textarea id="xray_result" rows="3" class="w-full p-2 border rounded-md"></textarea>
+                         </div>
+                         <div class="mt-4">
+                             <label class="block text-sm font-medium mb-1">Kết quả Siêu âm bụng</label>
+                             <textarea id="ultrasound_result" rows="3" class="w-full p-2 border rounded-md"></textarea>
+                         </div>
                     </div>
                 </div>
             </div>
