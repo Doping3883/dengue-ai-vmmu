@@ -93,8 +93,27 @@
             </div>
 
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-brain mr-2"></i> Chẩn đoán và phân độ AI</h2>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div>
+                         <div id="diagnosisResult" class="p-4 bg-gray-100 rounded-lg min-h-[150px]"><p class="text-gray-600">Nhập thông tin và nhấn "Thực hiện chẩn đoán"...</p></div>
+                         <button onclick="performDiagnosis()" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 no-print"><i class="fas fa-diagnoses mr-2"></i>Thực hiện chẩn đoán</button>
+                     </div>
+                     <div><div class="chart-container"><canvas id="riskChart"></canvas></div></div>
+                 </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-prescription-bottle-alt mr-2"></i> Hướng dẫn Điều trị & Liều lượng</h2>
+                <div id="treatmentPlan" class="space-y-4">
+                    <div class="p-4 bg-gray-100 rounded-lg">
+                        <p class="text-gray-600">Thực hiện chẩn đoán để nhận hướng dẫn điều trị chi tiết...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-notes-medical mr-2"></i> Theo dõi điều trị</h2>
-                
                 <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 mb-4 p-4 border rounded-lg bg-gray-50 no-print">
                     <div><label class="text-sm font-medium">Tri giác</label><select id="monitor_consciousness" class="w-full p-2 border rounded-md"><option value="Tỉnh">Tỉnh</option><option value="Lừ đừ">Lừ đừ</option><option value="Li bì">Li bì</option><option value="Hôn mê">Hôn mê</option></select></div>
                     <div><label class="text-sm font-medium">Nhiệt độ</label><input type="number" id="monitor_temp" class="w-full p-2 border rounded-md" step="0.1"></div>
@@ -110,20 +129,11 @@
                 <button onclick="addMonitoringRecord()" class="mb-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 no-print">
                     <i class="fas fa-plus mr-2"></i> Thêm vào bảng theo dõi
                 </button>
-                
                 <div class="overflow-x-auto">
                     <table class="w-full border-collapse border border-gray-300">
                         <thead class="bg-gray-100">
                             <tr>
-                                <th class="border p-2">Thời gian</th>
-                                <th class="border p-2">Tri giác</th>
-                                <th class="border p-2">Nhiệt độ</th>
-                                <th class="border p-2">Mạch/HA</th>
-                                <th class="border p-2">SpO2</th>
-                                <th class="border p-2">Ăn/Uống</th>
-                                <th class="border p-2">N.Tiểu</th>
-                                <th class="border p-2">Hct</th>
-                                <th class="border p-2">Dịch truyền/Xử trí</th>
+                                <th class="border p-2">Thời gian</th><th class="border p-2">Tri giác</th><th class="border p-2">Nhiệt độ</th><th class="border p-2">Mạch/HA</th><th class="border p-2">SpO2</th><th class="border p-2">Ăn/Uống</th><th class="border p-2">N.Tiểu</th><th class="border p-2">Hct</th><th class="border p-2">Dịch truyền/Xử trí</th>
                             </tr>
                         </thead>
                         <tbody id="monitoringTable">
@@ -132,8 +142,8 @@
                     </table>
                 </div>
             </div>
-
-            </div>
+             
+        </div>
     </div>
     
     <script src="app.js"></script>
