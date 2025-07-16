@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống AI Hỗ trợ Chẩn đoán Sốt Xuất Huyết Dengue v2.0</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @media print {
+            body { print-color-adjust: exact; }
+            .no-print { display: none !important; }
+        }
+        .chart-container { height: 300px; }
+        .alert-blink { animation: blink 1s infinite; }
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6">
+        
+        <div class="bg-blue-600 text-white p-6 rounded-lg mb-6">
+            <h1 class="text-3xl font-bold mb-2">
+                <i class="fas fa-stethoscope mr-3"></i>
+                HỆ THỐNG AI HỖ TRỢ CHẨN ĐOÁN SỐT XUẤT HUYẾT DENGUE
+            </h1>
+            <p class="text-blue-100">Theo Quyết định 2760/QĐ-BYT ngày 04/7/2023 của Bộ Y tế</p>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6 no-print">
+            <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                <i class="fas fa-users mr-2"></i> Quản lý Bệnh nhân
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                <div>
+                    <label for="patientSelect" class="block text-sm font-medium text-gray-700 mb-1">Chọn bệnh nhân đã lưu</label>
+                    <select id="patientSelect" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <option value="">-- Tải bệnh nhân --</option>
+                    </select>
+                </div>
+                <button onclick="savePatient()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                    <i class="fas fa-save mr-2"></i> Lưu Bệnh nhân
+                </button>
+                <button onclick="clearForm()" class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 transition duration-200">
+                    <i class="fas fa-plus-circle mr-2"></i> Bệnh nhân mới
+                </button>
+                <button onclick="deletePatient()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200">
+                    <i class="fas fa-trash-alt mr-2"></i> Xóa Bệnh nhân
+                </button>
+                <button onclick="exportPDF()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                    <i class="fas fa-file-pdf mr-2"></i> Xuất Báo cáo PDF
+                </button>
+            </div>
+        </div>
+
+        <div id="reportContent">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-user-md mr-2"></i> Thông tin bệnh nhân
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Họ và tên</label>
+                        <input type="text" id="patientName" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tuổi</label>
+                        <input type="number" id="patientAge" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="calculateWeight()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cân nặng (kg)</label>
+                        <input type="number" id="patientWeight" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" step="0.1">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Giới tính</label>
+                        <select id="patientGender" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Chọn giới tính</option>
+                            <option value="nam">Nam</option>
+                            <option value="nữ">Nữ</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ngày khởi phát</label>
+                        <input type="date" id="onsetDate" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent" onchange="calculateDiseaseDay()">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Ngày bệnh (ngày thứ)</label>
+                        <input type="number" id="diseaseDay" class="w-full p-2 border border-gray-300 rounded-md bg-gray-100" readonly>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                    <i class="fas fa-clipboard-list mr-2"></i> Đánh giá lâm sàng
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Triệu chứng lâm sàng</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center"><input type="checkbox" id="fever" class="mr-2 clinical-sign"><span>Sốt cao đột ngột, liên tục</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="headache" class="mr-2 clinical-sign"><span>Nhức đầu</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="anorexia" class="mr-2 clinical-sign"><span>Chán ăn</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="nausea" class="mr-2 clinical-sign"><span>Buồn nôn</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="myalgia" class="mr-2 clinical-sign"><span>Đau cơ, đau khớp</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="retroorbitalPain" class="mr-2 clinical-sign"><span>Nhức hai hố mắt</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="skinRash" class="mr-2 clinical-sign"><span>Da xung huyết</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="tourniquetPositive" class="mr-2 clinical-sign"><span>Nghiệm pháp dây thắt dương tính</span></label>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Dấu hiệu cảnh báo</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center"><input type="checkbox" id="restlessness" class="mr-2 warning-sign"><span class="text-red-600">Vật vã, lừ đừ, li bì</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="abdominalPain" class="mr-2 warning-sign"><span class="text-red-600">Đau bụng nhiều, liên tục</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="persistentVomiting" class="mr-2 warning-sign"><span class="text-red-600">Nôn ói nhiều (≥3 lần/1 giờ)</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="mucosalBleeding" class="mr-2 warning-sign"><span class="text-red-600">Xuất huyết niêm mạc</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="hepatomegaly" class="mr-2 warning-sign"><span class="text-red-600">Gan to >2cm dưới bờ sườn</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="oliguria" class="mr-2 warning-sign"><span class="text-red-600">Tiểu ít</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="pleuralEffusion" class="mr-2 warning-sign"><span class="text-red-600">Tràn dịch màng phổi/bụng</span></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-chart-line mr-2"></i> Dấu hiệu sinh tồn và xét nghiệm</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Nhiệt độ (°C)</label><input type="number" id="temperature" class="w-full p-2 border border-gray-300 rounded-md" step="0.1" min="35" max="42"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Mạch (lần/phút)</label><input type="number" id="pulse" class="w-full p-2 border border-gray-300 rounded-md" min="50" max="200"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">HA tâm thu (mmHg)</label><input type="number" id="systolicBP" class="w-full p-2 border border-gray-300 rounded-md" min="60" max="200" onchange="calculatePulsePressure()"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">HA tâm trương (mmHg)</label><input type="number" id="diastolicBP" class="w-full p-2 border border-gray-300 rounded-md" min="40" max="120" onchange="calculatePulsePressure()"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Hiệu áp (mmHg)</label><input type="number" id="pulsePressure" class="w-full p-2 border border-gray-300 rounded-md bg-gray-100" readonly></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Nhịp thở (lần/phút)</label><input type="number" id="respiratoryRate" class="w-full p-2 border border-gray-300 rounded-md" min="10" max="40"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">SpO2 (%)</label><input type="number" id="spO2" class="w-full p-2 border border-gray-300 rounded-md" min="70" max="100"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Nước tiểu (ml/kg/giờ)</label><input type="number" id="urineOutput" class="w-full p-2 border border-gray-300 rounded-md" step="0.1"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Hematocrit (%)</label><input type="number" id="hematocrit" class="w-full p-2 border border-gray-300 rounded-md" min="20" max="60"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">Tiểu cầu (/mm³)</label><input type="number" id="platelets" class="w-full p-2 border border-gray-300 rounded-md" min="10000" max="500000"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">AST (U/L)</label><input type="number" id="ast" class="w-full p-2 border border-gray-300 rounded-md" min="10" max="5000"></div>
+                    <div><label class="block text-sm font-medium text-gray-700 mb-1">ALT (U/L)</label><input type="number" id="alt" class="w-full p-2 border border-gray-300 rounded-md" min="10" max="5000"></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-brain mr-2"></i> Chẩn đoán và phân độ AI</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <div id="diagnosisResult" class="p-4 bg-gray-100 rounded-lg min-h-[150px]">
+                            <p class="text-gray-600">Nhập thông tin và nhấn "Thực hiện chẩn đoán"...</p>
+                        </div>
+                        <button onclick="performDiagnosis()" class="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 no-print">
+                            <i class="fas fa-diagnoses mr-2"></i> Thực hiện chẩn đoán
+                        </button>
+                    </div>
+                    <div>
+                        <div class="chart-container"><canvas id="riskChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="criticalAlerts" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 hidden">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2 text-lg alert-blink"></i><strong>Cảnh báo nguy hiểm!</strong>
+                </div>
+                <ul id="alertsList" class="mt-2 list-disc list-inside"></ul>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-prescription-bottle-alt mr-2"></i> Hướng dẫn điều trị</h2>
+                <div id="treatmentRecommendations" class="space-y-4">
+                    <div class="p-4 bg-gray-100 rounded-lg"><p class="text-gray-600">Thực hiện chẩn đoán để nhận hướng dẫn...</p></div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-calculator mr-2"></i> Tính toán liều thuốc</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Paracetamol (Hạ sốt)</h3>
+                        <div class="space-y-2">
+                            <p>Liều: 10-15 mg/kg/lần, cách 4-6 giờ</p>
+                            <p>Tối đa: 60 mg/kg/24 giờ</p>
+                            <div id="paracetamolDose" class="p-3 bg-blue-50 rounded-lg font-medium text-blue-800"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Dịch truyền (khi sốc)</h3>
+                        <div class="space-y-2">
+                            <p>Ringer Lactate/NaCl 0.9%</p>
+                            <p>Trẻ em: 20 ml/kg/giờ | Người lớn: 15 ml/kg/giờ</p>
+                            <div id="fluidDose" class="p-3 bg-green-50 rounded-lg font-medium text-green-800"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-tachometer-alt mr-2"></i> Bảng theo dõi</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full border-collapse border border-gray-300">
+                        <thead>
+                            <tr class="bg-gray-100">
+                                <th class="border border-gray-300 p-2">Thời gian</th>
+                                <th class="border border-gray-300 p-2">Nhiệt độ</th>
+                                <th class="border border-gray-300 p-2">Mạch</th>
+                                <th class="border border-gray-300 p-2">HA</th>
+                                <th class="border border-gray-300 p-2">Nhịp thở</th>
+                                <th class="border border-gray-300 p-2">SpO2</th>
+                                <th class="border border-gray-300 p-2">Hct</th>
+                                <th class="border border-gray-300 p-2">Xử trí</th>
+                            </tr>
+                        </thead>
+                        <tbody id="monitoringTable">
+                            <tr><td colspan="8" class="border border-gray-300 p-4 text-center text-gray-600">Chưa có dữ liệu theo dõi</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="addMonitoringRecord()" class="mt-4 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200 no-print">
+                    <i class="fas fa-plus mr-2"></i> Thêm record theo dõi
+                </button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-hospital-user mr-2"></i> Đánh giá tiêu chuẩn xuất viện</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="text-lg font-medium mb-3 text-gray-700">Tiêu chí (theo QĐ 2760/QĐ-BYT)</h3>
+                        <div class="space-y-2">
+                            <label class="flex items-center"><input type="checkbox" id="dc-afebrile" class="mr-2"><span>Hết sốt ≥ 48 giờ (không dùng Paracetamol)</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="dc-improved" class="mr-2"><span>Tình trạng lâm sàng tốt, tỉnh táo, ăn ngon miệng</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="dc-platelets" class="mr-2"><span>Số lượng tiểu cầu > 50.000/mm³</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="dc-hct" class="mr-2"><span>Hematocrit ổn định</span></label>
+                            <label class="flex items-center"><input type="checkbox" id="dc-noDistress" class="mr-2"><span>Không có dấu hiệu suy hô hấp</span></label>
+                        </div>
+                        <button onclick="evaluateDischargeCriteria()" class="mt-4 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition duration-200 no-print">
+                            <i class="fas fa-check-circle mr-2"></i> Đánh giá
+                        </button>
+                    </div>
+                    <div id="dischargeResult" class="p-4 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <p class="text-gray-600">Chờ kết quả đánh giá...</p>
+                    </div>
+                </div>
+            </div>
+            
+             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4 text-gray-800"><i class="fas fa-file-medical-alt mr-2"></i> Hướng dẫn sau xuất viện</h2>
+                <div id="postDischargeGuidance" class="p-4 bg-blue-50 rounded-lg text-blue-800 space-y-2">
+                     <p>Thực hiện chẩn đoán để nhận hướng dẫn...</p>
+                </div>
+            </div>
+        </div> <div class="bg-gray-800 text-white p-4 rounded-lg text-center mt-6">
+            <p>&copy; 2025 Hệ thống AI Chẩn đoán Sốt Xuất Huyết Dengue - Theo Quyết định 2760/QĐ-BYT</p>
+            <p class="text-sm text-gray-400 mt-1">Phát triển bởi Gemini (Google AI) - Chỉ dùng hỗ trợ, không thay thế ý kiến bác sĩ</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let monitoringData = [];
+        let riskChart;
+        let patientsData = {};
+        let currentPatientId = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeRiskChart();
+            setupEventListeners();
+            loadPatients();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('patientWeight').addEventListener('input', calculateDosages);
+            document.getElementById('patientAge').addEventListener('input', calculateDosages);
+            document.getElementById('patientSelect').addEventListener('change', handlePatientSelection);
+            
+            document.querySelectorAll('.warning-sign, input[type="number"]').forEach(el => {
+                el.addEventListener('input', checkCriticalAlerts);
+            });
+        }
+        
+        // --- PATIENT MANAGEMENT ---
+        function savePatient() {
+            const patientName = document.getElementById('patientName').value;
+            if (!patientName) {
+                alert('Vui lòng nhập tên bệnh nhân.');
+                return;
+            }
+
+            const patientId = currentPatientId || `patient_${Date.now()}`;
+            const patientRecord = { id: patientId, data: {}, monitoring: monitoringData };
+            
+            const formElements = document.querySelectorAll('input, select');
+            formElements.forEach(el => {
+                if(el.id) {
+                    patientRecord.data[el.id] = el.type === 'checkbox' ? el.checked : el.value;
+                }
+            });
+            
+            patientsData[patientId] = patientRecord;
+            localStorage.setItem('denguePatients', JSON.stringify(patientsData));
+            
+            alert(`Đã lưu thông tin cho bệnh nhân: ${patientName}`);
+            loadPatients();
+            document.getElementById('patientSelect').value = patientId;
+        }
+
+        function loadPatients() {
+            const savedData = localStorage.getItem('denguePatients');
+            if (savedData) {
+                patientsData = JSON.parse(savedData);
+                const patientSelect = document.getElementById('patientSelect');
+                patientSelect.innerHTML = '<option value="">-- Tải bệnh nhân --</option>';
+                for (const id in patientsData) {
+                    const option = document.createElement('option');
+                    option.value = id;
+                    option.textContent = patientsData[id].data.patientName || `Bệnh nhân ${id}`;
+                    patientSelect.appendChild(option);
+                }
+            }
+        }
+
+        function handlePatientSelection() {
+            const patientId = document.getElementById('patientSelect').value;
+            if (patientId && patientsData[patientId]) {
+                currentPatientId = patientId;
+                const patientRecord = patientsData[patientId];
+                
+                // Populate form
+                for (const key in patientRecord.data) {
+                    const el = document.getElementById(key);
+                    if (el) {
+                        if (el.type === 'checkbox') {
+                            el.checked = patientRecord.data[key];
+                        } else {
+                            el.value = patientRecord.data[key];
+                        }
+                    }
+                }
+                
+                // Load monitoring data
+                monitoringData = patientRecord.monitoring || [];
+                updateMonitoringTable();
+                
+                // Trigger calculations and re-analysis
+                performDiagnosis();
+                calculateDosages();
+
+            } else {
+                clearForm();
+            }
+        }
+
+        function deletePatient() {
+            const patientId = document.getElementById('patientSelect').value;
+            if (patientId && confirm(`Bạn có chắc muốn xóa bệnh nhân: ${patientsData[patientId].data.patientName}?`)) {
+                delete patientsData[patientId];
+                localStorage.setItem('denguePatients', JSON.stringify(patientsData));
+                loadPatients();
+                clearForm();
+            }
+        }
+        
+        function clearForm() {
+            document.querySelector('form, body').reset(); //簡易リセット
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') input.checked = false;
+                else if(input.tagName.toLowerCase() !== 'button') input.value = '';
+            });
+            document.getElementById('diagnosisResult').innerHTML = '<p class="text-gray-600">Nhập thông tin và nhấn "Thực hiện chẩn đoán"...</p>';
+            document.getElementById('treatmentRecommendations').innerHTML = '<div class="p-4 bg-gray-100 rounded-lg"><p class="text-gray-600">Thực hiện chẩn đoán để nhận hướng dẫn...</p></div>';
+            document.getElementById('dischargeResult').innerHTML = '<p class="text-gray-600">Chờ kết quả đánh giá...</p>';
+            document.getElementById('postDischargeGuidance').innerHTML = '<p>Thực hiện chẩn đoán để nhận hướng dẫn...</p>';
+            document.getElementById('paracetamolDose').innerHTML = '';
+            document.getElementById('fluidDose').innerHTML = '';
+            document.getElementById('criticalAlerts').classList.add('hidden');
+            monitoringData = [];
+            updateMonitoringTable();
+            initializeRiskChart();
+            currentPatientId = null;
+        }
+        
+        function exportPDF() {
+            const patientName = document.getElementById('patientName').value || "Chua_Nhap_Ten";
+            const element = document.getElementById('reportContent');
+            const opt = {
+                margin: 0.5,
+                filename: `ChanDoan_SXH_${patientName.replace(/ /g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().from(element).set(opt).save();
+        }
+
+        // --- CALCULATIONS ---
+        function calculateWeight() {
+            const age = parseInt(document.getElementById('patientAge').value);
+            if (age && age > 0 && age < 18) {
+                const estimatedWeight = (age * 2) + 8;
+                if (!document.getElementById('patientWeight').value) {
+                    document.getElementById('patientWeight').value = estimatedWeight;
+                }
+            }
+        }
+
+        function calculateDiseaseDay() {
+            try {
+                const onsetDate = new Date(document.getElementById('onsetDate').value);
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                onsetDate.setHours(0,0,0,0);
+                if (onsetDate > today) {
+                     document.getElementById('diseaseDay').value = '';
+                     return;
+                }
+                const diffTime = Math.abs(today - onsetDate);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+                document.getElementById('diseaseDay').value = diffDays;
+            } catch (e) {
+                 document.getElementById('diseaseDay').value = '';
+            }
+        }
+
+        function calculatePulsePressure() {
+            const systolic = parseFloat(document.getElementById('systolicBP').value);
+            const diastolic = parseFloat(document.getElementById('diastolicBP').value);
+            if (systolic && diastolic && systolic >= diastolic) {
+                document.getElementById('pulsePressure').value = systolic - diastolic;
+            } else {
+                document.getElementById('pulsePressure').value = '';
+            }
+        }
+        
+        function calculateDosages() {
+            const weight = parseFloat(document.getElementById('patientWeight').value);
+            const age = parseInt(document.getElementById('patientAge').value);
+            if (weight) {
+                // Paracetamol
+                const paracetamolMin = (weight * 10).toFixed(1);
+                const paracetamolMax = (weight * 15).toFixed(1);
+                const paracetamolDaily = (weight * 60).toFixed(1);
+                document.getElementById('paracetamolDose').innerHTML = `<strong>Liều khuyến cáo:</strong><br>• Mỗi lần: ${paracetamolMin} - ${paracetamolMax} mg<br>• Tối đa/ngày: ${paracetamolDaily} mg`;
+                
+                // Fluid
+                const fluidDose = age < 16 ? (weight * 20).toFixed(1) : (weight * 15).toFixed(1);
+                document.getElementById('fluidDose').innerHTML = `<strong>Liều dịch truyền (sốc):</strong><br>• ${fluidDose} ml/giờ trong 1 giờ đầu<br>• Theo dõi đáp ứng và điều chỉnh`;
+            } else {
+                 document.getElementById('paracetamolDose').innerHTML = '';
+                 document.getElementById('fluidDose').innerHTML = '';
+            }
+        }
+        
+        // --- DIAGNOSIS & GUIDANCE ---
+        function performDiagnosis() {
+            const diagnosisResult = analyzeDengueSymptoms();
+            displayDiagnosisResult(diagnosisResult);
+            generateTreatmentRecommendations(diagnosisResult);
+            updateRiskChart(diagnosisResult);
+            checkCriticalAlerts();
+            generatePostDischargeGuidance();
+        }
+
+        function analyzeDengueSymptoms() {
+            const diseaseDay = parseInt(document.getElementById('diseaseDay').value);
+            const warningSigns = {
+                restlessness: document.getElementById('restlessness').checked, abdominalPain: document.getElementById('abdominalPain').checked,
+                persistentVomiting: document.getElementById('persistentVomiting').checked, mucosalBleeding: document.getElementById('mucosalBleeding').checked,
+                hepatomegaly: document.getElementById('hepatomegaly').checked, oliguria: document.getElementById('oliguria').checked,
+                pleuralEffusion: document.getElementById('pleuralEffusion').checked
+            };
+            const hematocrit = parseFloat(document.getElementById('hematocrit').value);
+            const platelets = parseFloat(document.getElementById('platelets').value);
+            const ast = parseFloat(document.getElementById('ast').value);
+            const alt = parseFloat(document.getElementById('alt').value);
+            const pulsePressure = parseFloat(document.getElementById('pulsePressure').value);
+
+            let stage = 'Giai đoạn sốt';
+            if (diseaseDay >= 4 && diseaseDay <= 7) { stage = 'Giai đoạn nguy hiểm'; } 
+            else if (diseaseDay > 7) { stage = 'Giai đoạn hồi phục'; }
+
+            let severity = 'Sốt Dengue';
+            let riskLevel = 'Thấp';
+            
+            const warningSignCount = Object.values(warningSigns).filter(sign => sign).length;
+            
+            const hasLabWarning = (platelets && platelets < 100000) || (hematocrit && hematocrit > 45) || (ast && ast >= 400) || (alt && alt >= 400);
+
+            if (warningSignCount > 0 || hasLabWarning) {
+                severity = 'Sốt Dengue có dấu hiệu cảnh báo';
+                riskLevel = 'Trung bình';
+            }
+            
+            const isSevere = (ast && ast >= 1000) || (alt && alt >= 1000) || (pulsePressure && pulsePressure <= 20) || warningSigns.restlessness || warningSigns.pleuralEffusion;
+            
+            if (isSevere) {
+                severity = 'Sốt Dengue nặng';
+                riskLevel = 'Cao';
+            }
+            
+            return { stage, severity, riskLevel, warningSignCount, laboratoryValues: { hematocrit, platelets, ast, alt, pulsePressure }};
+        }
+
+        function displayDiagnosisResult(result) {
+            const resultDiv = document.getElementById('diagnosisResult');
+            const riskColor = { 'Thấp': 'text-green-600', 'Trung bình': 'text-yellow-600', 'Cao': 'text-red-600' };
+            resultDiv.innerHTML = `
+                <div class="space-y-3">
+                    <div class="flex items-center"><i class="fas fa-diagnosis mr-2 text-blue-600"></i><strong>Chẩn đoán:</strong> ${result.severity}</div>
+                    <div class="flex items-center"><i class="fas fa-clock mr-2 text-gray-600"></i><strong>Giai đoạn:</strong> ${result.stage}</div>
+                    <div class="flex items-center"><i class="fas fa-exclamation-triangle mr-2 ${riskColor[result.riskLevel]}"></i><strong>Mức độ nguy hiểm:</strong><span class="${riskColor[result.riskLevel]} font-semibold ml-1">${result.riskLevel}</span></div>
+                    <div class="text-sm text-gray-600"><strong>Số dấu hiệu cảnh báo:</strong> ${result.warningSignCount}/7</div>
+                </div>`;
+        }
+
+        function generateTreatmentRecommendations(result) {
+            const treatmentDiv = document.getElementById('treatmentRecommendations');
+            let recommendations = '';
+            if (result.severity === 'Sốt Dengue') {
+                recommendations = `<div class="bg-green-50 border border-green-200 p-4 rounded-lg"><h3 class="font-semibold text-green-800 mb-2">Điều trị ngoại trú</h3><ul class="list-disc list-inside space-y-1 text-green-700"><li>Hạ sốt: Paracetamol 10-15 mg/kg/lần.</li><li>Bù dịch: Uống nhiều nước, ORS, nước trái cây.</li><li>Theo dõi hàng ngày, tái khám khi có dấu hiệu cảnh báo.</li><li>Hướng dẫn người nhà nhận biết dấu hiệu nguy hiểm.</li></ul></div>`;
+            } else if (result.severity === 'Sốt Dengue có dấu hiệu cảnh báo') {
+                recommendations = `<div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg"><h3 class="font-semibold text-yellow-800 mb-2">Nhập viện theo dõi</h3><ul class="list-disc list-inside space-y-1 text-yellow-700"><li>Theo dõi dấu hiệu sinh tồn mỗi 4-6 giờ.</li><li>Truyền dịch khi có chỉ định (nôn nhiều, không uống được).</li><li>Theo dõi Hct, tiểu cầu, men gan hàng ngày.</li><li>Cảnh báo nguy cơ sốc, theo dõi lượng nước tiểu.</li></ul></div>`;
+            } else { // Severe Dengue
+                recommendations = `<div class="bg-red-50 border border-red-200 p-4 rounded-lg"><h3 class="font-semibold text-red-800 mb-2">Hồi sức tích cực (ICU)</h3><ul class="list-disc list-inside space-y-1 text-red-700"><li>Truyền dịch chống sốc: Ringer Lactate/NaCl 0.9% theo phác đồ.</li><li>Theo dõi mạch, HA, hiệu áp liên tục.</li><li>Xử trí suy tạng, rối loạn đông máu.</li><li>Cân nhắc truyền máu, huyết tương, tiểu cầu khi có chỉ định.</li><li>Thở oxy, theo dõi SpO2.</li></ul></div>`;
+            }
+            treatmentDiv.innerHTML = recommendations;
+        }
+
+        function evaluateDischargeCriteria() {
+            const criteria = {
+                afebrile: document.getElementById('dc-afebrile').checked,
+                improved: document.getElementById('dc-improved').checked,
+                platelets: document.getElementById('dc-platelets').checked,
+                hct: document.getElementById('dc-hct').checked,
+                noDistress: document.getElementById('dc-noDistress').checked,
+            };
+            const allMet = Object.values(criteria).every(c => c);
+            const resultDiv = document.getElementById('dischargeResult');
+
+            if (allMet) {
+                resultDiv.innerHTML = `<div class="text-center text-green-700"><i class="fas fa-check-circle fa-3x mb-2"></i><p class="font-semibold">Bệnh nhân đủ tiêu chuẩn xuất viện.</p></div>`;
+                resultDiv.className = 'p-4 bg-green-100 rounded-lg flex items-center justify-center';
+            } else {
+                resultDiv.innerHTML = `<div class="text-center text-red-700"><i class="fas fa-times-circle fa-3x mb-2"></i><p class="font-semibold">Bệnh nhân CHƯA đủ tiêu chuẩn xuất viện.</p><p class="text-sm">Cần tiếp tục theo dõi.</p></div>`;
+                resultDiv.className = 'p-4 bg-red-100 rounded-lg flex items-center justify-center';
+            }
+        }
+        
+        function generatePostDischargeGuidance() {
+            const guidanceDiv = document.getElementById('postDischargeGuidance');
+            guidanceDiv.innerHTML = `
+                <h4 class="font-semibold mb-2">Lời dặn cho bệnh nhân:</h4>
+                <ul class="list-disc list-inside space-y-1">
+                    <li>Nghỉ ngơi tại nhà, tránh làm việc nặng trong 1-2 tuần.</li>
+                    <li>Uống nhiều nước, ăn thức ăn dễ tiêu, đủ dinh dưỡng.</li>
+                    <li>Theo dõi thân nhiệt hàng ngày.</li>
+                    <li>Tái khám ngay nếu có bất kỳ dấu hiệu bất thường nào: sốt lại, mệt mỏi tăng, đau bụng, chảy máu...</li>
+                    <li>Tái khám theo lịch hẹn của bác sĩ để kiểm tra lại công thức máu.</li>
+                    <li>Không tự ý dùng thuốc Aspirin hoặc Ibuprofen để hạ sốt, giảm đau.</li>
+                </ul>`;
+        }
+
+        // --- UI & CHARTS ---
+        function initializeRiskChart() {
+            const ctx = document.getElementById('riskChart').getContext('2d');
+            if(riskChart) riskChart.destroy();
+            riskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Nguy cơ thấp', 'Nguy cơ trung bình', 'Nguy cơ cao'],
+                    datasets: [{ data: [33, 33, 34], backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: 'Phân tích Nguy cơ' }, legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        function updateRiskChart(result) {
+            const riskData = { 'Thấp': [70, 20, 10], 'Trung bình': [30, 50, 20], 'Cao': [10, 30, 60] };
+            riskChart.data.datasets[0].data = riskData[result.riskLevel] || [33,33,34];
+            riskChart.update();
+        }
+        
+        function checkCriticalAlerts() {
+            const alerts = [];
+            const pulsePressure = parseFloat(document.getElementById('pulsePressure').value);
+            const temperature = parseFloat(document.getElementById('temperature').value);
+            const urineOutput = parseFloat(document.getElementById('urineOutput').value);
+            const spO2 = parseFloat(document.getElementById('spO2').value);
+            const platelets = parseFloat(document.getElementById('platelets').value);
+            const ast = parseFloat(document.getElementById('ast').value);
+            const alt = parseFloat(document.getElementById('alt').value);
+
+            if (pulsePressure && pulsePressure <= 20) alerts.push('Hiệu áp ≤ 20 mmHg - Nguy cơ sốc cao!');
+            if (temperature && temperature >= 39.5) alerts.push('Sốt cao ≥ 39.5°C - Cần hạ sốt tích cực!');
+            if (urineOutput !== null && !isNaN(urineOutput) && urineOutput < 0.5) alerts.push('Tiểu ít < 0.5 ml/kg/giờ - Nguy cơ sốc!');
+            if (spO2 && spO2 < 95) alerts.push('SpO2 < 95% - Cần hỗ trợ oxy!');
+            if (platelets && platelets < 50000) alerts.push('Tiểu cầu < 50,000 - Nguy cơ xuất huyết cao!');
+            if ((ast && ast >= 1000) || (alt && alt >= 1000)) alerts.push('Men gan ≥ 1000 U/L - Suy gan cấp!');
+            if (document.getElementById('restlessness').checked) alerts.push('Vật vã, li bì - Dấu hiệu cảnh báo nặng!');
+            if (document.getElementById('persistentVomiting').checked) alerts.push('Nôn ói nhiều - Nguy cơ mất nước, sốc!');
+            if (document.getElementById('abdominalPain').checked) alerts.push('Đau bụng nhiều - Theo dõi chặt chẽ nguy cơ!');
+
+            const alertsDiv = document.getElementById('criticalAlerts');
+            const alertsList = document.getElementById('alertsList');
+            if (alerts.length > 0) {
+                alertsDiv.classList.remove('hidden');
+                alertsList.innerHTML = alerts.map(alert => `<li>${alert}</li>`).join('');
+            } else {
+                alertsDiv.classList.add('hidden');
+            }
+        }
+
+        // --- MONITORING TABLE ---
+        function addMonitoringRecord() {
+            const record = {
+                time: new Date().toLocaleTimeString('vi-VN'),
+                temperature: document.getElementById('temperature').value || '-',
+                pulse: document.getElementById('pulse').value || '-',
+                bp: `${document.getElementById('systolicBP').value || '-'}/${document.getElementById('diastolicBP').value || '-'}`,
+                respiratoryRate: document.getElementById('respiratoryRate').value || '-',
+                spO2: document.getElementById('spO2').value || '-',
+                hematocrit: document.getElementById('hematocrit').value || '-',
+                intervention: 'Theo dõi' // Placeholder
+            };
+            monitoringData.unshift(record); // Add to the top
+            updateMonitoringTable();
+        }
+
+        function updateMonitoringTable() {
+            const tableBody = document.getElementById('monitoringTable');
+            if (monitoringData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="8" class="border border-gray-300 p-4 text-center text-gray-600">Chưa có dữ liệu theo dõi</td></tr>';
+                return;
+            }
+            tableBody.innerHTML = monitoringData.map(r => `
+                <tr class="text-center">
+                    <td class="border border-gray-300 p-2">${r.time}</td>
+                    <td class="border border-gray-300 p-2">${r.temperature}</td>
+                    <td class="border border-gray-300 p-2">${r.pulse}</td>
+                    <td class="border border-gray-300 p-2">${r.bp}</td>
+                    <td class="border border-gray-300 p-2">${r.respiratoryRate}</td>
+                    <td class="border border-gray-300 p-2">${r.spO2}</td>
+                    <td class="border border-gray-300 p-2">${r.hematocrit}</td>
+                    <td class="border border-gray-300 p-2">${r.intervention}</td>
+                </tr>`).join('');
+        }
+       </div>
+
+        <div class="bg-gray-800 text-white p-4 rounded-lg text-center mt-6 no-print">
+            <p>&copy; 2025 Hệ thống AI Chẩn đoán Sốt Xuất Huyết Dengue</p>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
