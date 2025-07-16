@@ -1,11 +1,12 @@
 const CACHE_NAME = 'dengue-app-cache-v1';
 const URLS_TO_CACHE = [
-  '/',
-  '/index.html',
-  '/app.js',
-  // Thêm các file CSS, fonts hoặc icon khác nếu có
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
+  './',
+  './index.html',
+  './app.js',
+  './style.css',
+  './manifest.json',
+  './icons/icon-192x192.png',
+  './icons/icon-512x512.png',
   'https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css',
   'https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css',
   'https://cdn.jsdelivr.net/npm/chart.js',

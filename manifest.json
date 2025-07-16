@@ -1,19 +1,19 @@
 {
   "name": "AI Hỗ trợ Chẩn đoán Sốt Xuất Huyết",
   "short_name": "AI Dengue",
-  "start_url": ".",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#f3f4f6",
   "theme_color": "#2563eb",
   "description": "Hệ thống AI hỗ trợ chẩn đoán và điều trị sốt xuất huyết Dengue theo phác đồ BYT.",
   "icons": [
     {
-      "src": "icons/icon-192x192.png",
+      "src": "./icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "icons/icon-512x512.png",
+      "src": "./icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
