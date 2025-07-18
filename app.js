@@ -16,7 +16,12 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function setupEventListeners() {
+    // Tự động tính toán
     document.getElementById('onsetDate').addEventListener('input', calculateDiseaseDay);
+    document.getElementById('height').addEventListener('input', calculateBMI);
+    document.getElementById('weight').addEventListener('input', calculateBMI);
+    
+    // Quản lý bệnh nhân
     document.getElementById('patientSelect').addEventListener('change', handlePatientSelection);
 }
         
@@ -110,7 +115,6 @@ function clearForm(resetData = true) {
         }
     });
 
-    // Reset all dynamic UI sections
     const dynamicSections = ['diagnosisResult', 'treatmentPlan', 'differentialDiagnosis', 'dischargeResult'];
     dynamicSections.forEach(id => {
         const el = document.getElementById(id);
@@ -148,6 +152,24 @@ function calculateDiseaseDay() {
          document.getElementById('diseaseDay').value = '';
     }
 }
+
+function calculateBMI() {
+    const heightEl = document.getElementById('height');
+    const weightEl = document.getElementById('weight');
+    const bmiEl = document.getElementById('bmi');
+    if (!heightEl || !weightEl || !bmiEl) return;
+
+    const height = parseFloat(heightEl.value);
+    const weight = parseFloat(weightEl.value);
+
+    if (height > 0 && weight > 0) {
+        const heightInMeters = height / 100;
+        const bmi = weight / (heightInMeters * heightInMeters);
+        bmiEl.value = bmi.toFixed(2);
+    } else {
+        bmiEl.value = '';
+    }
+}
         
 // =================================================================
 //                      DIAGNOSIS & GUIDANCE
@@ -165,20 +187,18 @@ function performDiagnosis() {
     const patientData = getPatientDataFromForm();
     const diagnosisResult = analyzeDengueSymptoms(patientData);
 
-    // Update all UI components
     displayDiagnosisResult(diagnosisResult);
     generateTreatmentPlan(patientData, diagnosisResult);
     updateRiskChart(diagnosisResult);
-    checkAndDisplayAlerts(patientData, diagnosisResult);
+    checkAndDisplayAlerts(patientData);
     generateDifferentialDiagnosis(patientData, diagnosisResult);
     
-    // Show/hide advanced sections
     const shockSection = document.getElementById('shockManagementSection');
     const consultationAlert = document.getElementById('consultationAlert');
     
     if (diagnosisResult.severity === 'Sốt Dengue nặng') {
         shockSection?.classList.remove('hidden');
-        if (patientData.severeBleeding || patientData.severeOrganImpairment || diagnosisResult.unresponsiveShock) {
+        if (patientData.severeBleeding || patientData.severeOrganImpairment) {
             consultationAlert?.classList.remove('hidden');
         } else {
             consultationAlert?.classList.add('hidden');
@@ -256,7 +276,7 @@ function generateTreatmentPlan(patientData, diagnosisResult) {
     if (!treatmentDiv) return;
 
     const { weight, adjustedWeight } = patientData;
-    const effectiveWeight = adjustedWeight > 0 ? adjustedWeight : weight; // Dùng cân nặng hiệu chỉnh nếu có
+    const effectiveWeight = adjustedWeight > 0 ? adjustedWeight : weight;
     const { severity } = diagnosisResult;
     let html = '';
 
@@ -280,7 +300,20 @@ function generateTreatmentPlan(patientData, diagnosisResult) {
 }
 
 function generateDifferentialDiagnosis(patientData, diagnosisResult) {
-    // Logic for this function remains the same
+    const diffDiv = document.getElementById('differentialDiagnosis');
+    if (!diffDiv) return;
+    const { fever, petechiae, myalgia } = patientData;
+    let suggestions = [];
+
+    if (fever && petechiae) suggestions.push({ disease: 'Sốt phát ban (Sởi, Rubella)', features: 'Thường có ban dạng sẩn, viêm long đường hô hấp hoặc nổi hạch.' });
+    if (fever && myalgia) suggestions.push({ disease: 'Chikungunya', features: 'Đặc trưng bởi đau khớp rất nặng.' });
+    if (diagnosisResult.severity.includes('nặng')) suggestions.push({ disease: 'Sốc nhiễm khuẩn', features: 'Tìm ổ nhiễm trùng ban đầu và dựa vào kết quả cấy vi khuẩn.' });
+
+    if (suggestions.length === 0) {
+        diffDiv.innerHTML = `<div class="p-4 bg-gray-100 rounded-lg"><p>Chưa có gợi ý chẩn đoán phân biệt rõ ràng.</p></div>`;
+    } else {
+        diffDiv.innerHTML = suggestions.map(item => `<div class="p-3 bg-indigo-50 border-l-4 border-indigo-500 rounded-r-lg"><h4 class="font-semibold text-indigo-800">${item.disease}</h4><p class="text-sm text-indigo-700"><b>Đặc điểm phân biệt:</b> ${item.features}</p></div>`).join('');
+    }
 }
 
 function checkAndDisplayAlerts(patientData) {
@@ -306,22 +339,66 @@ function checkAndDisplayAlerts(patientData) {
 //                      UI & CHARTS
 // =================================================================
 function initializeRiskChart() {
-    // Logic remains the same
+    const ctx = document.getElementById('riskChart')?.getContext('2d');
+    if(!ctx) return;
+    if(riskChart) riskChart.destroy();
+    riskChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Nguy cơ thấp', 'Nguy cơ trung bình', 'Nguy cơ cao'],
+            datasets: [{ data: [33, 33, 34], backgroundColor: ['#10B981', '#F59E0B', '#EF4444'], borderWidth: 0 }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Phân tích Nguy cơ' }, legend: { position: 'bottom' } } }
+    });
 }
 
 function updateRiskChart(result) {
-    // Logic remains the same
+    if(!riskChart) return;
+    let riskLevel = 'Thấp';
+    if (result.severity === 'Sốt Dengue có dấu hiệu cảnh báo') riskLevel = 'Trung bình';
+    if (result.severity === 'Sốt Dengue nặng') riskLevel = 'Cao';
+    const riskData = { 'Thấp': [70, 20, 10], 'Trung bình': [30, 50, 20], 'Cao': [10, 30, 60] };
+    riskChart.data.datasets[0].data = riskData[riskLevel] || [33,33,34];
+    riskChart.update();
 }
 
 // =================================================================
 //                      MONITORING TABLE
 // =================================================================
 function addMonitoringRecord() {
-    // Logic remains the same
+    const record = {
+        time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        bp: document.getElementById('monitor_bp')?.value || '-',
+        pulse: document.getElementById('monitor_pulse')?.value || '-',
+        hct: document.getElementById('monitor_hct')?.value || '-',
+        platelets: document.getElementById('monitor_platelets')?.value || '-',
+        intervention: document.getElementById('monitor_intervention')?.value || 'Theo dõi'
+    };
+    monitoringData.unshift(record);
+    updateMonitoringTable();
+    
+    const fieldsToClear = ['monitor_bp', 'monitor_pulse', 'monitor_hct', 'monitor_platelets', 'monitor_intervention'];
+    fieldsToClear.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = '';
+    });
 }
 
 function updateMonitoringTable() {
-    // Logic remains the same
+    const tableBody = document.getElementById('monitoringTable');
+    if(!tableBody) return;
+    if (monitoringData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="border p-4 text-center text-gray-600">Chưa có dữ liệu theo dõi</td></tr>';
+        return;
+    }
+    tableBody.innerHTML = monitoringData.map(r => `
+        <tr class="text-center">
+            <td class="border p-2">${r.time}</td>
+            <td class="border p-2">${r.pulse}/${r.bp}</td>
+            <td class="border p-2">${r.hct ? r.hct + '%' : '-'}</td>
+            <td class="border p-2">${r.platelets || '-'}</td>
+            <td class="border p-2 text-left">${r.intervention}</td>
+        </tr>`).join('');
 }
 
 // =================================================================
